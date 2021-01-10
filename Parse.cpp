@@ -1,8 +1,53 @@
 #include "Parser.h"
 
 //**************************************************************************************************
-// Global variables
+// Global variable
 //**************************************************************************************************
+
+byteString empbyteString {{0,0,0,0,0,0,0,0}}; //Empty byteString
+
+
+//**************************************************************************************************
+// Procedure byteStringOut()
+//**************************************************************************************************
+
+// byteString console output //
+
+void Parser::byteStringOut(byteString Out)
+{
+    for (uint8_t i = 0; i < STRING_LENGTH_BYTE; i++)
+        std::cout << std::hex << (int) Out.bytes[i] << '\t';
+    std::cout << std::endl;
+}
+
+
+//**************************************************************************************************
+// Procedure StringToByte()
+//**************************************************************************************************
+
+// String to byteString convertion //
+
+byteString Parser::StringToByte(std::string Input)
+{
+        byteString Output = empbyteString;    //Empty string created
+        
+        uint8_t Count = 0;              //Byte's order in a string
+        std::string buff = "";          //Buffer containing substring that's been gotten by dividion original string with '\t'
+
+        uint8_t cycleLength = Input.size() + 1;         
+        for (uint8_t i = 0; i < cycleLength; i++)       
+        {
+            if (Input[i] == '\t' || Input[i] == '\x0')          //If tab or an end of a string
+            {
+                Output.bytes[Count] = (uint8_t) std::stoi(buff, 0, 16); //Converst substring into hex number
+                buff = "";                                              //Clear buffer
+                Count++;
+            }
+            buff += Input[i];
+        }
+        return Output;
+}
+
 
 //**************************************************************************************************
 // Procedure ReadFile() 
@@ -53,6 +98,78 @@ void Parser::dataStringOut(dataString out)   // File output works the same way
     std::cout << std::endl;
 }
 
+//**************************************************************************************************
+// Procedure SPNDataOut() 
+//**************************************************************************************************
+
+//   SPNData console output   //
+
+void Parser::SPNDataOut(SPNData Out)
+{
+    std::cout << Out.Name << ": \n";
+    std::cout << "ID: " << Out.ID << ", Operation: ";
+    
+    size_t operationCount = Out.operation.size();
+    for (size_t i = 0; i < operationCount; i++)
+        std::cout << Out.operation[i] << Out.operationValue[i] << '\n';
+}
+
+//**************************************************************************************************
+// Procedure StringToDataString() 
+//**************************************************************************************************
+
+//   String to DataString convertation for a strict format log files   //
+
+dataString Parser::StringToDataString(std::string BuffPtr)  
+{
+    dataString Data;                // Output
+    uint8_t subStringCounter = 0;   // Numer of read elements in a string
+    std::string buff = "";          // Buffer for an element
+
+    uint8_t dataCounter = 0;        
+
+    uint8_t j = 0;
+    while (true)
+    {
+            
+        bool IsSpace = BuffPtr[j] == ' ' || BuffPtr[j] == '\x0';    // If dividion symbol
+            
+        while (BuffPtr[j] == ' ')   // Skip all of them
+           j++;
+
+        if (IsSpace)
+        {
+            switch (subStringCounter)   // If element's number is target element number, construct dataString
+            {
+                case TIME_POSITION:         // Optimised using char and definitions in a Parser.h
+                    Data.TIME = buff;
+                    break;
+                case ID_POSITION:
+                    Data.ID = buff;
+                    break;
+                case DATA_LEN_POSITION:
+                    Data.DataLen = std::stoi(buff, 0, 16);
+                    break;
+                default:
+                    if (subStringCounter >= DATA_POSITION)  // Data is the last elemet in a string
+                    {
+                        Data.Data.bytes[dataCounter] = std::stoi(buff, 0, 16);
+                        dataCounter++;
+                    }
+            }
+            subStringCounter++;
+            buff = "";
+        }
+        buff += BuffPtr[j];
+            
+        if (BuffPtr[j] == '\x0')    // End cycle if current symbol is the end of a string
+            break;
+
+        j++;
+    }
+    
+    return Data;
+}
 
 //**************************************************************************************************
 // Procedure StringToDataString() 
@@ -115,6 +232,9 @@ dataString Parser::StringToDataString(std::string BuffPtr, char DividionSymbol, 
         uint8_t diff = STRING_LENGTH_BYTE - Data.DataLen;
         uint8_t startPos = Data.DataLen;
         Data.DataLen = STRING_LENGTH_BYTE;
+        
+        Parser::byteStringOut(Data.Data);
+        std::cout << (int) diff << std::endl;
 
         for (uint8_t i = startPos; i < STRING_LENGTH_BYTE; i++)
             Data.Data.bytes[i] = 0;
