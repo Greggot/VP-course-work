@@ -1,19 +1,14 @@
 CC = g++
-FLAGS = -Wall
-CPP = $(wildcard *.cpp)		#wildcard - find all files via pattern (*.cpp)
-OBJ = $(patsubst %.cpp, %.o, $(CPP))	#patsubst - replace one to anoter in a variable
+CFLAGS = -c -Wall
+SOURCES = main.cpp Parse.cpp SPNParser.cpp
+OBJECTS = $(SOURCES:.cpp=.o)
 PROGRAM = SPNParser
+SUBPROGRAM = txttobin
 
-all: $(PROGRAM)
-	@echo All Done!
+all: $(SOURCES) $(PROGRAM) 
+	
+$(PROGRAM): $(OBJECTS) 
+	$(CC) $(OBJECTS) -o $@
 
-$(PROGRAM) : $(OBJ)
-	$(CC) $(FLAGS) -o $(PROGRAM) $^
-	@echo "Linking Done..."
-
-$(OBJ) : $(CPP)
-	$(CC) $(FLAGS) -c $(CPP)
-	@echo "Compilation Done..."
-
-clean: 
-	rm -f $(OBJ) $(PROGRAM)
+.cpp.o:
+	$(CC) $(CFLAGS) $< -o $@
